@@ -1,6 +1,6 @@
 {
   "name": "vscode-glspc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "displayName": "Generic LSP Client (v2)",
   "description": "Generic LSP Client for VS Code based on llllvvuu's version",
   "categories": [
