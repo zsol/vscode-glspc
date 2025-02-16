@@ -55,14 +55,14 @@
       "type": "object",
       "title": "Generic LSP Client",
       "properties": {
-        "glspc.serverCommand": {
+        "glspc.server.command": {
           "scope": "window",
           "editPresentation": "multilineText",
           "type": "string",
           "minLength": 1,
           "description": "The command to start the language server."
         },
-        "glspc.serverCommandArguments": {
+        "glspc.server.commandArguments": {
           "scope": "window",
           "type": "array",
           "items": {
@@ -76,7 +76,7 @@
           ],
           "description": "Command-line arguments to pass to the LSP server. Example: [\"lsp\"]"
         },
-        "glspc.languageId": {
+        "glspc.server.languageId": {
           "scope": "window",
           "type": "array",
           "items": {
@@ -89,7 +89,7 @@
           "minItems": 1,
           "description": "The language id for which the server will be used. Example: python."
         },
-        "glspc.environmentVariables": {
+        "glspc.server.environmentVariables": {
           "scope": "window",
           "type": "object",
           "additionalProperties": {
@@ -98,7 +98,7 @@
           "default": {},
           "description": "Additional environment variables to set when starting the LSP server executable. Use $VAR to refer to existing environment variables. Example: { \"PATH\": \"/some/path:$PATH\" }"
         },
-        "glspc.initializationOptions": {
+        "glspc.server.initializationOptions": {
           "scope": "window",
           "type": "object",
           "default": {},

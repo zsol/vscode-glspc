@@ -9,12 +9,13 @@ import { commands, window, workspace } from "vscode"
 import type { LanguageClientOptions } from "vscode-languageclient/node"
 import { LanguageClient } from "vscode-languageclient/node"
 
-let client: LanguageClient
+let client: LanguageClient | undefined
 let server: ChildProcess | undefined
+const SERVER_CONFIG_NAMESPACE = "glspc.server"
 
 async function startServer() {
-  const config = workspace.getConfiguration("glspc")
-  const serverCommand: string = config.get("serverCommand") ?? ""
+  const config = workspace.getConfiguration(SERVER_CONFIG_NAMESPACE)
+  const serverCommand: string = config.get("command") ?? ""
   const outputChannel = window.createOutputChannel("Generic LSP Client")
   const languageId: string[] = config.get("languageId") ?? []
 
@@ -25,8 +26,7 @@ async function startServer() {
     return
   }
 
-  const serverCommandArguments: string[] =
-    config.get("serverCommandArguments") ?? []
+  const serverCommandArguments: string[] = config.get("commandArguments") ?? []
   const initializationOptions: object =
     config.get("initializationOptions") ?? {}
   const environmentVariables: Record<string, string> =
@@ -62,8 +62,9 @@ async function startServer() {
     })
 
     server.on("spawn", () => {
-      void window.showInformationMessage(
+      void window.setStatusBarMessage(
         `Started language server: ${serverCommand}`,
+        5000,
       )
     })
 
@@ -90,17 +91,41 @@ async function startServer() {
 }
 
 async function killServer(): Promise<void> {
-  await client.stop()
+  try {
+    await client?.stop()
+  } catch (error) {}
   server?.kill()
+}
+
+async function _restartServer() {
+  await killServer()
+  await startServer()
+}
+
+async function restartServer() {
+  let serverCommand: string =
+    workspace.getConfiguration(SERVER_CONFIG_NAMESPACE).get("command") ?? ""
+  let restartFuture = _restartServer()
+  window.setStatusBarMessage(
+    `Restarting language server: ${serverCommand}`,
+    restartFuture,
+  )
+  await restartFuture
 }
 
 export async function activate(context: ExtensionContext) {
   await startServer()
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration(async event => {
+      if (event.affectsConfiguration(SERVER_CONFIG_NAMESPACE)) {
+        await restartServer()
+      }
+    }),
+  )
 
   context.subscriptions.push(
     commands.registerCommand("glspc.restartServer", async () => {
-      await killServer()
-      startServer()
+      await restartServer()
     }),
   )
 }
