@@ -4,18 +4,18 @@ For the rare instances where you have an LSP Server but not an LSP Client for VS
 
 ## Marketplace Link
 
-[Generic LSP Client](https://marketplace.visualstudio.com/items?itemName=llllvvuu.llllvvuu-glspc)
+[Generic LSP Client](https://marketplace.visualstudio.com/items?itemName=zsol.glspc)
 
 ## Setup
-Configure the server executable under "Extension Settings".
+
+Configure the server executable and the language ids under "Extension Settings".
 
 ## "Failed to start server: spawn {command} ENOENT"
+
 If there is a $PATH issue, you have a few options:
+
 1. Run `code .` from a terminal in which the command is available in $PATH.
 2. Set PATH in `glspc.environmentVariables` under "Extension Settings".
-
-## Tracing
-You can enable tracing by adding `"glspc.trace.server": "verbose"` to your `settings.json` and then checking the "Generic LSP Client" output.
 
 ## Multiple LSP Servers
 
@@ -37,5 +37,5 @@ Then you can load it into VSCode under Extensions > ... > Install from VSIX...
 
 ## Credits
 
-- [torokati44/vscode-glspc](https://gitlab.com/torokati44/vscode-glspc) - where this is forked from
+- [llllvvuu/vscode-glspc](https://gitlab.com/llllvvuu/vscode-glspc) - where this is forked from
 - [Matts966/efm-langserver-vscode](https://github.com/Matts966/efm-langserver-vscode) - where the text changed handlers are taken from

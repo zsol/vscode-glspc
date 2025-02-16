@@ -18,70 +18,77 @@ let server: ChildProcess | undefined
 function startServer() {
   const config = workspace.getConfiguration("glspc")
   const serverCommand: string = config.get("serverCommand") ?? ""
+  const outputChannel = window.createOutputChannel("Generic LSP Client")
+  const languageId: string[] = config.get("languageId") ?? []
 
-  if (serverCommand) {
-    const serverCommandArguments: string[] =
-      config.get("serverCommandArguments") ?? []
-    const languageId: string = config.get("languageId") ?? ""
-    const initializationOptions: object =
-      config.get("initializationOptions") ?? {}
-    const environmentVariables: Record<string, unknown> =
-      config.get("environmentVariables") ?? {}
-
-    const outputChannel = window.createOutputChannel("glspc")
-    outputChannel.appendLine("starting glspc...")
-
-    const serverOptions: ServerOptions = (): Promise<ChildProcess> => {
-      const env = { ...process.env }
-      for (const [key, value] of Object.entries(environmentVariables)) {
-        if (typeof value !== "string") continue
-        env[key] = value.replace(
-          /\$(\w+)/g,
-          (_, varName: string) => env[varName] ?? "",
-        )
-      }
-      server = spawn(serverCommand, serverCommandArguments, {
-        env,
-        cwd: workspace.workspaceFolders?.[0]?.uri.fsPath,
-      })
-
-      server.on("error", error => {
-        outputChannel.appendLine(`Failed to start server: ${error.message}`)
-        void window.showErrorMessage(
-          `Failed to start language server: ${serverCommand}. Error: ${error.message}`,
-        )
-      })
-
-      server.on("exit", (code, signal) => {
-        outputChannel.appendLine(
-          `Server process exited with code ${code} and signal ${signal}`,
-        )
-      })
-
-      server.on("spawn", () => {
-        void window.showInformationMessage(
-          `Started language server: ${serverCommand}`,
-        )
-      })
-
-      return Promise.resolve(server)
-    }
-
-    const clientOptions: LanguageClientOptions = {
-      documentSelector: [languageId],
-      diagnosticCollectionName: "glspc",
-      initializationOptions,
-    }
-
-    client = new LanguageClient(
-      "glspc",
-      "Generic LSP Client",
-      serverOptions,
-      clientOptions,
+  if (!serverCommand) {
+    outputChannel.appendLine(
+      "No server command, not starting glspc. Configure this in the settings.",
     )
-
-    void client.start().then(() => outputChannel.appendLine("started glspc."))
+    return
   }
+
+  const serverCommandArguments: string[] =
+    config.get("serverCommandArguments") ?? []
+  const initializationOptions: object =
+    config.get("initializationOptions") ?? {}
+  const environmentVariables: Record<string, string> =
+    config.get("environmentVariables") ?? {}
+
+  const serverOptions: ServerOptions = (): Promise<ChildProcess> => {
+    const env = { ...process.env }
+    const cwd = workspace.workspaceFolders?.[0]?.uri.fsPath
+    for (const [key, value] of Object.entries(environmentVariables)) {
+      if (typeof value !== "string") continue
+      env[key] = value.replace(
+        /\$(\w+)/g,
+        (_, varName: string) => env[varName] ?? "",
+      )
+    }
+    outputChannel.appendLine(
+      `starting glspc: ${serverCommand} ${serverCommandArguments.join(" ")}`,
+    )
+    outputChannel.appendLine(`in directory: ${cwd}`)
+    server = spawn(serverCommand, serverCommandArguments, { env, cwd })
+
+    server.on("error", error => {
+      outputChannel.appendLine(`Failed to start server: ${error.message}`)
+      void window.showErrorMessage(
+        `Failed to start language server: ${error.name}. Details: ${error.message}`,
+      )
+    })
+
+    server.on("exit", (code, signal) => {
+      outputChannel.appendLine(
+        `Server process exited with code ${code} and signal ${signal}`,
+      )
+    })
+
+    server.on("spawn", () => {
+      void window.showInformationMessage(
+        `Started language server: ${serverCommand}`,
+      )
+    })
+
+    return Promise.resolve(server)
+  }
+
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: languageId,
+    diagnosticCollectionName: "glspc",
+    outputChannel,
+    traceOutputChannel: outputChannel,
+    initializationOptions,
+  }
+
+  client = new LanguageClient(
+    "glspc",
+    "Generic LSP Client",
+    serverOptions,
+    clientOptions,
+  )
+
+  void client.start().then(() => outputChannel.appendLine("started glspc."))
 }
 
 async function killServer(): Promise<void> {

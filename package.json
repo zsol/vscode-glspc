@@ -1,16 +1,19 @@
 {
-  "name": "llllvvuu-glspc",
-  "version": "0.1.12",
+  "name": "glspc",
+  "version": "0.2.0",
   "displayName": "Generic LSP Client",
   "description": "Generic LSP Client for VS Code",
-  "categories": [],
-  "repository": "https://github.com/llllvvuu/vscode-glspc",
-  "publisher": "llllvvuu",
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": "https://github.com/zsol/vscode-glspc",
+  "publisher": "zsol",
   "contributors": [
     "llllvvuu",
     "torokati44",
     "ruilvo",
-    "Matts966"
+    "Matts966",
+    "zsol"
   ],
   "engines": {
     "vscode": "^1.88.1"
@@ -27,14 +30,14 @@
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver-protocol": "^3.17.3"
+    "vscode-languageserver-protocol": "^3.17.5"
   },
   "devDependencies": {
     "@types/node": "^20.5.6",
     "@types/vscode": "^1.88.0",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
-    "@vscode/vsce": "^2.20.1",
+    "@vscode/vsce": "3.2.2",
     "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
@@ -54,26 +57,44 @@
       "properties": {
         "glspc.serverCommand": {
           "scope": "window",
-          "type": "string",
-          "default": "",
           "editPresentation": "multilineText",
+          "type": "string",
+          "minLength": 1,
           "description": "The command to start the language server."
         },
         "glspc.serverCommandArguments": {
           "scope": "window",
           "type": "array",
+          "items": {
+            "type": "string"
+          },
           "default": [],
+          "examples": [
+            [
+              "lsp"
+            ]
+          ],
           "description": "Command-line arguments to pass to the LSP server. Example: [\"lsp\"]"
         },
         "glspc.languageId": {
           "scope": "window",
-          "type": "string",
-          "default": "",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "examples": [
+              "python",
+              "js"
+            ]
+          },
+          "minItems": 1,
           "description": "The language id for which the server will be used. Example: python."
         },
         "glspc.environmentVariables": {
           "scope": "window",
           "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
           "default": {},
           "description": "Additional environment variables to set when starting the LSP server executable. Use $VAR to refer to existing environment variables. Example: { \"PATH\": \"/some/path:$PATH\" }"
         },
@@ -81,7 +102,7 @@
           "scope": "window",
           "type": "object",
           "default": {},
-          "description": "https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams"
+          "markdownDescription": "[initializeParams](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams) to be sent over to the language server during initialization."
         }
       }
     },
@@ -91,6 +112,5 @@
         "title": "Generic LSP Client: Restart server"
       }
     ]
-  },
-  "packageManager": "pnpm@8.15.5+sha256.4b4efa12490e5055d59b9b9fc9438b7d581a6b7af3b5675eb5c5f447cee1a589"
+  }
 }
