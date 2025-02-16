@@ -6,16 +6,13 @@
 import { type ChildProcess, spawn } from "child_process"
 import type { ExtensionContext } from "vscode"
 import { commands, window, workspace } from "vscode"
-import type {
-  LanguageClientOptions,
-  ServerOptions,
-} from "vscode-languageclient/node"
+import type { LanguageClientOptions } from "vscode-languageclient/node"
 import { LanguageClient } from "vscode-languageclient/node"
 
 let client: LanguageClient
 let server: ChildProcess | undefined
 
-function startServer() {
+async function startServer() {
   const config = workspace.getConfiguration("glspc")
   const serverCommand: string = config.get("serverCommand") ?? ""
   const outputChannel = window.createOutputChannel("Generic LSP Client")
@@ -35,7 +32,7 @@ function startServer() {
   const environmentVariables: Record<string, string> =
     config.get("environmentVariables") ?? {}
 
-  const serverOptions: ServerOptions = (): Promise<ChildProcess> => {
+  const serverOptions = async () => {
     const env = { ...process.env }
     const cwd = workspace.workspaceFolders?.[0]?.uri.fsPath
     for (const [key, value] of Object.entries(environmentVariables)) {
@@ -70,7 +67,7 @@ function startServer() {
       )
     })
 
-    return Promise.resolve(server)
+    return await server
   }
 
   const clientOptions: LanguageClientOptions = {
@@ -88,7 +85,8 @@ function startServer() {
     clientOptions,
   )
 
-  void client.start().then(() => outputChannel.appendLine("started glspc."))
+  await client.start()
+  outputChannel.appendLine("started glspc.")
 }
 
 async function killServer(): Promise<void> {
@@ -96,8 +94,8 @@ async function killServer(): Promise<void> {
   server?.kill()
 }
 
-export function activate(context: ExtensionContext) {
-  startServer()
+export async function activate(context: ExtensionContext) {
+  await startServer()
 
   context.subscriptions.push(
     commands.registerCommand("glspc.restartServer", async () => {
@@ -107,6 +105,6 @@ export function activate(context: ExtensionContext) {
   )
 }
 
-export function deactivate(): Thenable<void> | undefined {
-  return killServer()
+export async function deactivate() {
+  return await killServer()
 }
