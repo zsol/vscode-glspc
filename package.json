@@ -103,6 +103,18 @@
           "type": "object",
           "default": {},
           "markdownDescription": "[initializeParams](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams) to be sent over to the language server during initialization."
+        },
+        "glspc.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "compact",
+            "verbose"
+          ],
+          "default": "off",
+          "markdownDescription": "Emit JSON-RPC communication tracing in the output window (helpful for debugging)."
         }
       }
     },
