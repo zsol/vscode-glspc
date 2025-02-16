@@ -4,23 +4,29 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { type ChildProcess, spawn } from "child_process"
-import type { ExtensionContext } from "vscode"
+import type { ExtensionContext, LogOutputChannel } from "vscode"
 import { commands, window, workspace } from "vscode"
 import type { LanguageClientOptions } from "vscode-languageclient/node"
 import { LanguageClient } from "vscode-languageclient/node"
 
 let client: LanguageClient | undefined
 let server: ChildProcess | undefined
+let outputChannel: LogOutputChannel | undefined
 const SERVER_CONFIG_NAMESPACE = "glspc.server"
 
 async function startServer() {
+  if (outputChannel === undefined) {
+    window.showErrorMessage(
+      "glspc internal error: unable to create output channel",
+    )
+    return
+  }
   const config = workspace.getConfiguration(SERVER_CONFIG_NAMESPACE)
   const serverCommand: string = config.get("command") ?? ""
-  const outputChannel = window.createOutputChannel("Generic LSP Client")
   const languageId: string[] = config.get("languageId") ?? []
 
   if (!serverCommand) {
-    outputChannel.appendLine(
+    outputChannel?.error(
       "No server command, not starting glspc. Configure this in the settings.",
     )
     return
@@ -42,21 +48,21 @@ async function startServer() {
         (_, varName: string) => env[varName] ?? "",
       )
     }
-    outputChannel.appendLine(
+    outputChannel?.info(
       `starting glspc: ${serverCommand} ${serverCommandArguments.join(" ")}`,
     )
-    outputChannel.appendLine(`in directory: ${cwd}`)
+    outputChannel?.info(`in directory: ${cwd}`)
     server = spawn(serverCommand, serverCommandArguments, { env, cwd })
 
     server.on("error", error => {
-      outputChannel.appendLine(`Failed to start server: ${error.message}`)
+      outputChannel?.error(`Failed to start server: ${error.message}`, error)
       void window.showErrorMessage(
         `Failed to start language server: ${error.name}. Details: ${error.message}`,
       )
     })
 
     server.on("exit", (code, signal) => {
-      outputChannel.appendLine(
+      outputChannel?.error(
         `Server process exited with code ${code} and signal ${signal}`,
       )
     })
@@ -75,7 +81,6 @@ async function startServer() {
     documentSelector: languageId,
     diagnosticCollectionName: "glspc",
     outputChannel,
-    traceOutputChannel: outputChannel,
     initializationOptions,
   }
 
@@ -87,10 +92,11 @@ async function startServer() {
   )
 
   await client.start()
-  outputChannel.appendLine("started glspc.")
+  outputChannel?.info("started glspc.")
 }
 
 async function killServer(): Promise<void> {
+  outputChannel?.info("stopping server")
   try {
     await client?.stop()
   } catch (error) {}
@@ -114,6 +120,9 @@ async function restartServer() {
 }
 
 export async function activate(context: ExtensionContext) {
+  outputChannel = window.createOutputChannel("Generic LSP Client", {
+    log: true,
+  })
   await startServer()
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(async event => {
